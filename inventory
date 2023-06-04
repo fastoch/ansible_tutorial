@@ -1,0 +1,8 @@
+# Following IP addresses are not real Ansible hosts
+# They are given as examples in the following tutorial:
+# https://www.youtube.com/watch?v=4REljLsOnXk&list=PLT98CRl2KxKEUHie1m24-wkyHpEsa4Y70&index=4
+
+172.16.250.132
+172.16.250.133
+172.16.250.134
+
