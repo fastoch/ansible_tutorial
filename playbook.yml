@@ -59,6 +59,30 @@
       state: latest
     when: ansible_distribution == "CentOS"
 
+  - name: start httpd (CentOS)
+    tags: apache,centos,httpd
+    service: 
+      name: httpd
+      state: started
+      enabled: yes
+    when: ansible_distribution == "CentOS"
+
+  - name: change email address for admin
+    tags: apache,centos,httpd
+    lineinfile: # this module allows us to change a line in a file 
+      path: /etc/httpd/conf/httpd.conf
+      regexp: '^ServerAdmin' # this regex looks for a line that begins with 'ServerAdmin'
+      line: ServerAdmin somebody@somewhere.net # replace the entire line that matches the regex with this
+    when: ansible_distribution == "CentOS"
+    register: httpd # allows Ansible to capture the state in a variable that is used in the next play conditional
+
+  - name: restart httpd (CentOS)
+    tags: apache, centos, httpd
+    service: 
+      name: httpd
+      state: restarted
+    when: httpd.changed # execute this play when the variable httpd includes a state of 'changed'
+
   - name: copy default index.html
     tags: apache,apache2,httpd
     copy:
@@ -67,6 +91,7 @@
       owner: root
       group: root
       mode: 0644
+
 
 - hosts: db_servers
   become: true
