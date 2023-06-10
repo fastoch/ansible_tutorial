@@ -63,7 +63,7 @@
 
   - name: install Apache and PHP for CentOS servers
     tags: apache,httpd,centos
-    apt:
+    dnf:
       name: 
         - httpd
         - php
