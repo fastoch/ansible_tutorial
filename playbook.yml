@@ -4,131 +4,42 @@
   become: true # for actions that require sudo privileges
   pre_tasks:
 
-  - name: update repo cache (CentOS)
+  - name: update repository index (CentOS)
     tags: always # this task will always run
     dnf:
       update_cache: yes
     changed_when: false # status won't be 'changed' when the cache will be updated
     when: ansible_distribution == "CentOS"  
 
-  - name: update repo cache (Ubuntu)
+  - name: update repository index (Ubuntu)
     tags: always
     apt:
       update_cache: yes
     changed_when: false
     when: ansible_distribution == "Ubuntu"  
 
-
 - hosts: all
   become: true
-  tasks: 
-    
-  - name: add ssh key for simone
-    tags: always
-    authorized_key:
-      user: simone
-      key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPOX78vvRseCZU/6Y9R80pomI3t2WQdJOTKrc6ZU4P6h ansible"
-
+  roles:
+    - base
 
 - hosts: workstations
   become: true
-  tasks:
-
-  - name: install unzip
-    package: # this module is a generic package manager
-      name: unzip
-
-  - name: install terraform
-    unarchive: # this module requires unzip
-      src: https://releases.hashicorp.com/terraform/1.4.6/terraform_1.4.6_linux_amd64.zip
-      dest: /usr/local/bin
-      remote_src: yes
-      mode: 0755
-      owner: root
-      group: root
-
+  roles:
+    - workstations
 
 - hosts: web_servers
   become: true
-  tasks:
-
-  - name: install Apache and PHP for Ubuntu servers
-    tags: apache,apache2,ubuntu
-    apt:
-      name: 
-        - apache2
-        - libapache2-mod-php
-      state: latest
-    when: ansible_distribution == "Ubuntu"
-
-  - name: install Apache and PHP for CentOS servers
-    tags: apache,httpd,centos
-    apt:
-      name: 
-        - httpd
-        - php
-      state: latest
-    when: ansible_distribution == "CentOS"
-
-  - name: start httpd (CentOS)
-    tags: apache,centos,httpd
-    service: 
-      name: httpd
-      state: started
-      enabled: yes
-    when: ansible_distribution == "CentOS"
-
-  - name: change email address for admin
-    tags: apache,centos,httpd
-    lineinfile: # this module allows us to change a line in a file 
-      path: /etc/httpd/conf/httpd.conf
-      regexp: '^ServerAdmin' # this regex looks for a line that begins with 'ServerAdmin'
-      line: ServerAdmin somebody@somewhere.net # replace the entire line that matches the regex with this
-    when: ansible_distribution == "CentOS"
-    register: httpd # allows Ansible to capture the state in a variable that is used in the next play conditional
-
-  - name: restart httpd (CentOS)
-    tags: apache, centos, httpd
-    service: 
-      name: httpd
-      state: restarted
-    when: httpd.changed # execute this play when the variable httpd includes a state of 'changed'
-
-  - name: copy default index.html
-    tags: apache,apache2,httpd
-    copy:
-      src: index.html
-      dest: /var/www/html/index.html
-      owner: root
-      group: root
-      mode: 0644
-
+  roles:
+    - web_servers
 
 - hosts: db_servers
   become: true
-  tasks:
-
-  - name: install mariadb package (CentOS)
-    tags: centos,db,mariadb
-    dnf:
-      name: mariadb
-      state: latest
-    when: ansible_distribution == "CentOS"
-
-  - name: install mariadb package (Ubuntu)
-    tags: ubuntu,db,mariadb
-    apt:
-      name: mariadb-server
-      state: latest
-    when: ansible_distribution == "Ubuntu"
-
+  roles:
+    - db_servers
 
 - hosts: file_servers
   become: true
-  tasks: 
+  roles:
+    - file_servers
 
-  - name: install samba package
-    tags: samba
-    package:
-      name: samba
-      state: latest
