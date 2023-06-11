@@ -1,44 +1,26 @@
-- name: install Apache and PHP for Ubuntu servers
-  tags: apache,apache2,ubuntu
-  apt:
+- name: install Apache and PHP 
+  tags: apache,httpd,php
+  package:
     name: 
-      - apache2
-      - libapache2-mod-php
+      - "{{ apache_package_name }}"
+      - "{{ php_package_name }}"
     state: latest
-  when: ansible_distribution == "Ubuntu"
 
-- name: install Apache and PHP for CentOS servers
-  tags: apache,httpd,centos
-  dnf:
-    name: 
-      - httpd
-      - php
-    state: latest
-  when: ansible_distribution == "CentOS"
-
-- name: start httpd (CentOS)
-  tags: apache,centos,httpd
+- name: start and enable apache service 
+  tags: apache,httpd
   service: 
-    name: httpd
+    name: "{{ apache_service }}"
     state: started
     enabled: yes
-  when: ansible_distribution == "CentOS"
 
 - name: change email address for admin
   tags: apache,centos,httpd
-  lineinfile: # this module allows us to change a line in a file 
+  lineinfile: 
     path: /etc/httpd/conf/httpd.conf
-    regexp: '^ServerAdmin' # this regex looks for a line that begins with 'ServerAdmin'
-    line: ServerAdmin somebody@somewhere.net # replace the entire line that matches the regex with this
+    regexp: '^ServerAdmin' 
+    line: ServerAdmin somebody@somewhere.net 
   when: ansible_distribution == "CentOS"
-  register: httpd # allows Ansible to capture the state in a variable that is used in the next play conditional
-
-- name: restart httpd (CentOS)
-  tags: apache, centos, httpd
-  service: 
-    name: httpd
-    state: restarted
-  when: httpd.changed # execute this play when the variable httpd includes a state of 'changed'
+  notify: restart_apache
 
 - name: copy default index.html
   tags: apache,apache2,httpd
